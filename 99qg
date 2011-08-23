@@ -1,0 +1,247 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+
+if RUBY_VERSION < "1.9"
+  $KCODE = "u"
+end
+
+require "optparse"
+
+NAME_SHORT = "99qg"
+NAME_LONG = "KuKu Question Generator"
+VERSION_PREFIX = "0.0.1"
+AUTHOR = "takehikom (takehiko@sys.wakayama-u.ac.jp)"
+
+module Kuku
+  class Data
+    def initialize(h = {})
+      @opt_kts = h[:aformat] == 1
+
+      @q = [
+             %w(a個入りのチョコレート、b箱でいくつ 個 23456789 23456789),
+             %w(a人ずつ座っているベンチ、bつで何人 人 23 23456789),
+             %w(a人、bチームで野球の試合、全部で何人 人 579 234),
+             %w(つのつの一本　赤鬼どん♪b人で、つの何本 本 1 123456789),
+             %w(bグループのネコ、それぞれa匹で何匹いる 匹 45678 45678),
+             %w(a人乗りの車、b台あったら何人まで乗れる 人 45 3456),
+             %w(b枚のお皿にみかんがaつずつ、お皿は何枚 枚 234 456 ichimai),
+             %w(b枚のお皿にみかんがaつずつ、みかんは何個 個 234 456),
+             %w(毎月のおこづかいはa千円、半年でいくら 円 2345 6 senen),
+             %w(高さacmのブロック、b個積んだら高さは cm 456789 23456789),
+             %w(三輪車三輪車三輪車。ひらがなにすると全部で何文字 文字 26 3 sanrinsha),
+             %w(１セットa回の腕立て伏せ、bセットで何回 回 3579 3579),
+            ]
+      @ktable = "〇一二三四五六七八九".split(//)
+      @ntable = "０１２３４５６７８９".split(//)
+    end
+
+    def print_version
+      puts "#{NAME_LONG} Version #{VERSION_PREFIX}.#{sumup_question}"
+      puts "Copyright (C) 2011 #{AUTHOR}"
+    end
+
+    def make_question_answer(seed = nil)
+      srand(seed) if Numeric === seed
+      q = @q[rand(@q.size)]
+      sentence0, unit, a_s, b_s, opt = *q
+      a = (a_s.size == 1 ? a_s : a_s[rand(a_s.size), 1]).to_i
+      b = (b_s.size == 1 ? b_s : b_s[rand(b_s.size), 1]).to_i
+
+      question = make_question(sentence0, a, b)
+      if String === opt
+        a, b = send("convert_" + opt, a, b)
+        if opt == "sanrinsha"
+          question = make_question(sentence0, a, b)
+        end
+      end
+      answer = make_answer(a, b, unit, opt)
+
+      [question, answer]
+    end
+
+    private
+
+    def sumup_question
+      @q.inject(0) {|r, i| r + i[2].split(//).size * i[3].split(//).size}
+    end
+
+    def make_question(sentence, a, b)
+      sentence.sub(/a/, to_arabic(a)).sub(/b/, to_arabic(b)) + "？"
+    end
+
+    def make_answer(a, b, unit, opt)
+      if @opt_kts
+        make_answer_timeshokku(a, b, unit, opt)
+      else
+        make_answer_kuku(a, b, unit, opt)
+      end
+    end
+
+    def make_answer_kuku(a, b, unit, opt)
+      if String === opt
+        p1 = send("multiply_" + opt, a, b)
+      else
+        p1 = multiply(a, b)
+      end
+      if String === opt
+        p2 = send("product_" + opt, a, b)
+      else
+        p2 = product(a, b)
+      end
+      p3 = p2
+      if opt == "senen"
+        p2 = product(a, b)
+      end
+
+      p1 + "＝" + p2 + " 答え" + p3 + unit
+    end
+
+    def make_answer_timeshokku(a, b, unit, opt)
+      # http://d.hatena.ne.jp/takehikom/20110602/1306956150
+
+      if String === opt
+        p1 = send("kuku_" + opt, a, b)
+      else
+        p1 = kuku(a, b)
+      end
+      if String === opt
+        p2 = send("product_" + opt, a, b)
+      else
+        p2 = product(a, b)
+      end
+
+      p1 + p2 + unit
+    end
+
+    def method_missing(name, *args)
+      case name.to_s  # .to_sがないと，Ruby 1.8では正規表現に
+                      # マッチしなくなる（nameはSymbolのインスタンスであるため）
+      when /^kuku_/
+        kuku(*args)
+      when /^multiply_/
+        multiply(*args)
+      when /^product_/
+        product(*args)
+      when /^convert_/
+        args
+      else
+        super
+      end
+    end
+
+    def kuku(a, b)
+      to_kansuji(a) + to_kansuji(b) + (a * b < 10 ? "が" : "、")
+    end
+
+    def kuku_ichimai(a, b)
+      kuku(1, b)
+    end
+
+    def multiply(a, b)
+      to_arabic(a) + "×" + to_arabic(b)
+    end
+
+    def product(a, b)
+      to_arabic(a * b)
+    end
+
+    def product_senen(a, b)
+      to_arabic(a * b * 1000)
+    end
+
+    def convert_ichimai(a, b)
+      [1, b]
+    end
+
+    def convert_sanrinsha(a, b)
+      [a, 18 / a]
+    end
+
+    def deform_number(num, table)
+      if num == 0
+        return table[0]
+      end
+      str = ""
+      while num > 0
+        str = table[num % 10] + str
+        num /= 10
+      end
+      str
+    end
+
+    def to_kansuji(num)
+      deform_number(num, @ktable)
+    end
+
+    def to_arabic(num)
+      deform_number(num, @ntable)
+    end
+  end
+
+  class Line
+    def initialize(h = {})
+      @printversion = h[:version] || false
+      @aformat = h[:aformat] || 0
+      @qmax = h[:qmax] || -1
+      @pause1 = h[:pause1] || 3
+      @pause2 = h[:pause2] || 2
+      @qonly = h[:qonly] || false
+    end
+
+    def start
+      q = Kuku::Data.new(:aformat => @aformat)
+      if @printversion
+        q.print_version
+        exit
+      end
+
+      while @qmax != 0
+        question, answer = q.make_question_answer
+        print question
+        $stdout.flush
+        sleep(@pause1) if @pause1 > 0
+        unless @qonly
+          print " ", answer
+          $stdout.flush
+          sleep(@pause2) if @pause2 > 0
+        end
+        puts
+        @qmax -= 1 if @qmax > 0
+      end
+    end
+  end
+end
+
+if __FILE__ == $0
+  opt = OptionParser.new
+  h = {}
+  opt.on("-v", "--version", "show version") {
+    h[:version] = true
+  }
+  opt.on("-n", "--number=VAL", "number of question") {|v|
+    h[:qmax] = v.to_i
+  }
+  opt.on("-Q", "--qonly", "question only") {
+    h[:qonly] = true
+  }
+  opt.on("-T", "--kts", "answer by \'Kuiz Time Shokku\'") {
+    h[:aformat] = 1
+    h[:pause1] = 3
+    h[:pause2] = 2
+  }
+  opt.on("-N", "--Number=VAL", "questions in a lump") {|v|
+    h[:qmax] = v.to_i
+    h[:pause1] = h[:pause2] = 0
+  }
+  opt.on("-p", "--pause=VAL", "pause by seconds") {|v|
+    case v
+    when /(\d+),(\d+)/
+      h[:pause1] = $1.to_i
+      h[:pause2] = $2.to_i
+    when /\d+/
+      h[:pause1] = h[:pause2] = $&.to_i
+    end
+  }
+  opt.parse!(ARGV)
+  Kuku::Line.new(h).start
+end

@@ -1,0 +1,12 @@
+$ ruby 99qg --version
+KuKu Question Generator Version 0.0.1.219
+Copyright (C) 2011 takehikom (takehiko@sys.wakayama-u.ac.jp)
+
+$ ruby 99qg --help
+Usage: 99qg [options]
+    -v, --version                    show version
+    -n, --number=VAL                 number of question
+    -Q, --qonly                      question only
+    -T, --kts                        answer by 'Kuiz Time Shokku'
+    -N, --Number=VAL                 questions in a lump
+    -p, --pause=VAL                  pause by seconds
