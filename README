@@ -1,5 +1,5 @@
 $ ruby 99qg --version
-KuKu Question Generator Version 0.0.1.219
+KuKu Question Generator Version 0.0.1.291
 Copyright (C) 2011 takehikom (takehiko@sys.wakayama-u.ac.jp)
 
 $ ruby 99qg --help
