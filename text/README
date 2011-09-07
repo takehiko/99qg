@@ -1,0 +1,2 @@
+ruby 99qg --all | nkf -w8 -Lw > text/99qg_all.txt
+ruby 99qg --shuffle --kts --seed=0 | nkf -w8 -Lw > text/99qg_shuffle_kts.txt
