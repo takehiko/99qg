@@ -9,7 +9,7 @@ require "optparse"
 
 NAME_SHORT = "99qg"
 NAME_LONG = "KuKu Question Generator"
-VERSION_PREFIX = "0.0.1"
+VERSION_PREFIX = "0.0.1a"
 AUTHOR = "takehikom (takehiko@sys.wakayama-u.ac.jp)"
 
 module Kuku
@@ -31,6 +31,16 @@ module Kuku
             %w(三輪車三輪車三輪車。ひらがなにすると全部で何文字 文字 26 3 sanrinsha),
             %w(１セットa回の腕立て伏せ、bセットで何回 回 3579 3579),
             %w(b人でa時間かかる仕事，１人だと何時間 時間 123456789 23456789),
+            %w(イチゴがa個ずつ乗ったケーキがb個、イチゴはいくつ 個 23 3456),
+            %w(b人にa枚ずつ百円玉を渡したら、全部でいくら 円 345 456 hyakuen),
+            %w(acmのテープ、b倍になったら何cm cm 13579 2468),
+            %w(aｍ間隔でb本の旗、端から端まで何ｍ ｍ 3578 3456789 ueki),
+            %w(四つ葉のクローバーがbつ、葉っぱは何枚 枚 4 234),
+            %w(a個セットのマグネット、bセットでいくつ 個 3456 23456),
+            %w(aリットル入りの飲み物がb本で何リットル リットル 125 3579),
+            %w(b匹のナナホシテントウ、ホシの数は 個 7 234),
+            %w(おにぎりa個入りのお弁当がbつ、おにぎりいくつ 個 23 6789),
+            %w(五円玉がb枚で、何円 円 5 123456789),
             ]
       @ktable = "〇一二三四五六七八九".split(//)
       @ntable = "０１２３４５６７８９".split(//)
@@ -41,23 +51,32 @@ module Kuku
       puts "Copyright (C) 2011 #{AUTHOR}"
     end
 
-    def make_question_answer(seed = nil)
-      srand(seed) if Numeric === seed
+    def choose_question_answer
       q = @q[rand(@q.size)]
-      sentence0, unit, a_s, b_s, opt = *q
+      sentence, unit, a_s, b_s, opt = *q
       a = (a_s.size == 1 ? a_s : a_s[rand(a_s.size), 1]).to_i
       b = (b_s.size == 1 ? b_s : b_s[rand(b_s.size), 1]).to_i
 
-      question = make_question(sentence0, a, b)
-      if String === opt
-        a, b = send("convert_" + opt, a, b)
-        if opt == "sanrinsha"
-          question = make_question(sentence0, a, b)
+      # [question, answer]
+      make_question_answer(sentence, unit, a, b, opt)
+    end
+
+    def all_question_answer
+      qa_a = []
+      @q.each do |q1|
+        sentence, unit, a_s, b_s, opt = *q1
+        a_a = a_s.split(//).map{|i| i.to_i}
+        b_a = b_s.split(//).map{|i| i.to_i}
+        a_a.each do |a|
+          b_a.each do |b|
+            qa_a << make_question_answer(sentence, unit, a, b, opt)
+          end
         end
       end
-      answer = make_answer(a, b, unit, opt)
+      qa_a.uniq! if false
 
-      [question, answer]
+      # [[question1, answer1], [question2, answer2], ...]
+      qa_a
     end
 
     private
@@ -66,8 +85,18 @@ module Kuku
       @q.inject(0) {|r, i| r + i[2].split(//).size * i[3].split(//).size}
     end
 
+    def make_question_answer(sentence, unit, a, b, opt)
+      if String === opt
+        sentence, a, b = send("convert_" + opt, sentence, a, b)
+      end
+      question = make_question(sentence, a, b)
+      answer = make_answer(a, b, unit, opt)
+
+      [question + "？", answer]
+    end
+
     def make_question(sentence, a, b)
-      sentence.sub(/a/, to_arabic(a)).sub(/b/, to_arabic(b)) + "？"
+      sentence.sub(/a/, to_arabic(a)).sub(/b/, to_arabic(b))
     end
 
     def make_answer(a, b, unit, opt)
@@ -90,7 +119,7 @@ module Kuku
         p2 = product(a, b)
       end
       p3 = p2
-      if opt == "senen"
+      if opt == "senen" || opt == "hyakuen"
         p2 = product(a, b)
       end
 
@@ -115,8 +144,7 @@ module Kuku
     end
 
     def method_missing(name, *args)
-      case name.to_s  # .to_sがないと，Ruby 1.8では正規表現に
-                      # マッチしなくなる（nameはSymbolのインスタンスであるため）
+      case name.to_s  # "to_s" for Ruby 1.8
       when /^kuku_/
         kuku(*args)
       when /^multiply_/
@@ -150,12 +178,21 @@ module Kuku
       to_arabic(a * b * 1000)
     end
 
-    def convert_ichimai(a, b)
-      [1, b]
+    def product_hyakuen(a, b)
+      to_arabic(a * b * 100)
     end
 
-    def convert_sanrinsha(a, b)
-      [a, 18 / a]
+    def convert_ichimai(s, a, b)
+      [make_question(s, a, b), 1, b]
+    end
+
+    def convert_sanrinsha(s, a, b)
+      b = 18 / a
+      [make_question(s, a, b), a, b]
+    end
+
+    def convert_ueki(s, a, b)
+      [make_question(s, a, b), a, b - 1]
     end
 
     def deform_number(num, table)
@@ -179,7 +216,7 @@ module Kuku
     end
   end
 
-  class Line
+  class Generator
     def initialize(h = {})
       @printversion = h[:version] || false
       @aformat = h[:aformat] || 0
@@ -187,6 +224,7 @@ module Kuku
       @pause1 = h[:pause1] || 3
       @pause2 = h[:pause2] || 2
       @qonly = h[:qonly] || false
+      @action = h[:action]
     end
 
     def start
@@ -194,10 +232,21 @@ module Kuku
       if @printversion
         q.print_version
         exit
+      elsif @action == :all || @action == :shuffle
+        qa_a = q.all_question_answer
+        if @action == :shuffle
+          qa_a.sort_by! {rand}
+        end
+        qa_a.each do |question, answer|
+          print question
+          print " ", answer unless @qonly
+          puts
+        end
+        exit
       end
 
       while @qmax != 0
-        question, answer = q.make_question_answer
+        question, answer = q.choose_question_answer
         print question
         $stdout.flush
         sleep(@pause1) if @pause1 > 0
@@ -243,6 +292,15 @@ if __FILE__ == $0
       h[:pause1] = h[:pause2] = $&.to_i
     end
   }
+  opt.on("-s", "--seed=VAL", "random seed") {|v|
+    srand(v.to_i)
+  }
+  opt.on("-A", "--all", "print all questions") {|v|
+    h[:action] = :all
+  }
+  opt.on("-S", "--shuffle", "print all questions at random") {|v|
+    h[:action] = :shuffle
+  }
   opt.parse!(ARGV)
-  Kuku::Line.new(h).start
+  Kuku::Generator.new(h).start
 end

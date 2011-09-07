@@ -1,5 +1,5 @@
 $ ruby 99qg --version
-KuKu Question Generator Version 0.0.1.291
+KuKu Question Generator Version 0.0.1a.411
 Copyright (C) 2011 takehikom (takehiko@sys.wakayama-u.ac.jp)
 
 $ ruby 99qg --help
@@ -10,3 +10,6 @@ Usage: 99qg [options]
     -T, --kts                        answer by 'Kuiz Time Shokku'
     -N, --Number=VAL                 questions in a lump
     -p, --pause=VAL                  pause by seconds
+    -s, --seed=VAL                   random seed
+    -A, --all                        print all questions
+    -S, --shuffle                    print all questions at random
