@@ -1,15 +1,17 @@
 $ ruby 99qg --version
-KuKu Question Generator Version 0.0.1a.411
+KuKu Question Generator Version 0.0.1b.523
 Copyright (C) 2011 takehikom (takehiko@sys.wakayama-u.ac.jp)
 
 $ ruby 99qg --help
 Usage: 99qg [options]
-    -v, --version                    show version
-    -n, --number=VAL                 number of question
-    -Q, --qonly                      question only
-    -T, --kts                        answer by 'Kuiz Time Shokku'
+    -A, --all                        print all questions
     -N, --Number=VAL                 questions in a lump
+    -Q, --qonly                      question only
+    -S, --shuffle                    print all questions at random
+    -T, --kts                        answer by 'Kuiz Time Shokku'
+    -c, --multiplicand=VAL           upper limit of multiplicand
+    -f, --confuse=VAL                upper limit of confusion
+    -n, --number=VAL                 number of question
     -p, --pause=VAL                  pause by seconds
     -s, --seed=VAL                   random seed
-    -A, --all                        print all questions
-    -S, --shuffle                    print all questions at random
+    -v, --version                    show version

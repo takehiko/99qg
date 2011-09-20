@@ -9,38 +9,44 @@ require "optparse"
 
 NAME_SHORT = "99qg"
 NAME_LONG = "KuKu Question Generator"
-VERSION_PREFIX = "0.0.1a"
+VERSION_PREFIX = "0.0.1b"
 AUTHOR = "takehikom (takehiko@sys.wakayama-u.ac.jp)"
 
 module Kuku
   class Data
     def initialize(h = {})
-      @opt_kts = h[:aformat] == 1
+      @opt_kts = (h[:aformat] == 1)
+      @cfslimit = h[:confuse]
+      @mc1 = h[:mc1]
+      @mc2 = h[:mc2]
+      @mc_a = (@mc1..@mc2).to_a
 
       @q = [
-            %w(a個入りのチョコレート、b箱でいくつ 個 23456789 23456789),
-            %w(a人ずつ座っているベンチ、bつで何人 人 23 23456789),
-            %w(a人、bチームで野球の試合、全部で何人 人 579 234),
-            %w(つのつの一本　赤鬼どん♪b人で、つの何本 本 1 123456789),
-            %w(bグループのネコ、それぞれa匹で何匹いる 匹 45678 45678),
-            %w(a人乗りの車、b台あったら何人まで乗れる 人 45 3456),
-            %w(b枚のお皿にみかんがaつずつ、お皿は何枚 枚 234 456 ichimai),
-            %w(b枚のお皿にみかんがaつずつ、みかんは何個 個 234 456),
-            %w(毎月のおこづかいはa千円、半年でいくら 円 2345 6 senen),
-            %w(高さacmのブロック、b個積んだら高さは cm 456789 23456789),
-            %w(三輪車三輪車三輪車。ひらがなにすると全部で何文字 文字 26 3 sanrinsha),
-            %w(１セットa回の腕立て伏せ、bセットで何回 回 3579 3579),
-            %w(b人でa時間かかる仕事、１人だと何時間 時間 123456789 23456789),
-            %w(イチゴがa個ずつ乗ったケーキがb個、イチゴはいくつ 個 23 3456),
-            %w(b人にa枚ずつ百円玉を渡したら、全部でいくら 円 345 456 hyakuen),
-            %w(acmのテープ、b倍になったら何cm cm 13579 2468),
-            %w(aｍ間隔でb本の旗、端から端まで何ｍ ｍ 3578 3456789 ueki),
-            %w(四つ葉のクローバーがbつ、葉っぱは何枚 枚 4 234),
-            %w(a個セットのマグネット、bセットでいくつ 個 3456 23456),
-            %w(aリットル入りの飲み物がb本で何リットル リットル 125 3579),
-            %w(b匹のナナホシテントウ、ホシの数は 個 7 234),
-            %w(おにぎりa個入りのお弁当がbつ、おにぎりいくつ 個 23 6789),
-            %w(五円玉がb枚で、何円 円 5 123456789),
+            %w(1 a個入りのチョコレート、b箱でいくつ 個 23456789 23456789),
+            %w(1 a人ずつ座っているベンチ、bつで何人 人 23 23456789),
+            %w(1 a人、bチームで野球の試合、全部で何人 人 579 234),
+            %w(1 a人乗りの車、b台あったら何人まで乗れる 人 45 3456),
+            %w(1 高さacmのブロック、b個積んだら高さは cm 456789 23456789),
+            %w(1 １セットa回の腕立て伏せ、bセットで何回 回 3579 3579),
+            %w(1 イチゴがa個ずつ乗ったケーキがb個、イチゴはいくつ 個 23 3456),
+            %w(1 acmのテープ、b倍になったら何cm cm 13579 2468),
+            %w(1 a個セットのマグネット、bセットでいくつ 個 3456 23456),
+            %w(1 aリットル入りの飲み物がb本で何リットル リットル 125 3579),
+            %w(1 おにぎりa個入りのお弁当がbつ、おにぎりいくつ 個 23 6789),
+            %w(2 つのつの一本　赤鬼どん♪b人で、つの何本 本 1 123456789),
+            %w(2 四つ葉のクローバーがbつ、葉っぱは何枚 枚 4 234),
+            %w(2 b匹のナナホシテントウ、ホシの数は 個 7 234),
+            %w(2 五円玉がb枚で、何円 円 5 123456789),
+            %w(2 １ｍでakgの鉄の棒、bｍだと何kg kg 123456789 23456789),
+            %w(3 bグループのネコ、それぞれa匹で何匹いる 匹 45678 45678),
+            %w(3 b枚のお皿にみかんがaつずつ、みかんは何個 個 234 456),
+            %w(3 bつの箱にボールがaつずつ、ボールは何個 個 34569 23456789),
+            %w(4 b枚のお皿にみかんがaつずつ、お皿は何枚 枚 234 456 ichimai),
+            %w(4 毎月のおこづかいはa千円、半年でいくら 円 2345 6 senen),
+            %w(4 三輪車三輪車三輪車。ひらがなにすると全部で何文字 文字 26 3 sanrinsha),
+            %w(4 b人でa時間かかる仕事、１人だと何時間 時間 123456789 23456789),
+            %w(4 b人にa枚ずつ百円玉を渡したら、全部でいくら 円 345 456 hyakuen),
+            %w(4 aｍ間隔でb本の旗、端から端まで何ｍ ｍ 3578 3456789 ueki),
             ]
       @ktable = "〇一二三四五六七八九".split(//)
       @ntable = "０１２３４５６７８９".split(//)
@@ -52,20 +58,33 @@ module Kuku
     end
 
     def choose_question_answer
-      q = @q[rand(@q.size)]
-      sentence, unit, a_s, b_s, opt = *q
-      a = (a_s.size == 1 ? a_s : a_s[rand(a_s.size), 1]).to_i
-      b = (b_s.size == 1 ? b_s : b_s[rand(b_s.size), 1]).to_i
+      qa = nil
+      until qa
+        q = @q[rand(@q.size)]
+        cfslevel_s, sentence, unit, a_s, b_s, opt = *q
+        cfslevel = cfslevel_s.to_i
+        next if cfslevel > @cfslimit
+
+        a_a = a_s.split(//).map{|i| i.to_i} & @mc_a
+        next if a_a.empty?
+        a = a_a[rand(a_a.size)]
+        b = (b_s.size == 1 ? b_s : b_s[rand(b_s.size), 1]).to_i
+
+        qa = make_question_answer(sentence, unit, a, b, opt)
+      end
 
       # [question, answer]
-      make_question_answer(sentence, unit, a, b, opt)
+      qa
     end
 
     def all_question_answer
       qa_a = []
       @q.each do |q1|
-        sentence, unit, a_s, b_s, opt = *q1
-        a_a = a_s.split(//).map{|i| i.to_i}
+        cfslevel_s, sentence, unit, a_s, b_s, opt = *q1
+        cfslevel = cfslevel_s.to_i
+        next if cfslevel > @cfslimit
+
+        a_a = a_s.split(//).map{|i| i.to_i} & @mc_a
         b_a = b_s.split(//).map{|i| i.to_i}
         a_a.each do |a|
           b_a.each do |b|
@@ -82,7 +101,7 @@ module Kuku
     private
 
     def sumup_question
-      @q.inject(0) {|r, i| r + i[2].split(//).size * i[3].split(//).size}
+      @q.inject(0) {|r, i| r + i[3].split(//).size * i[4].split(//).size}
     end
 
     def make_question_answer(sentence, unit, a, b, opt)
@@ -225,10 +244,19 @@ module Kuku
       @pause2 = h[:pause2] || 2
       @qonly = h[:qonly] || false
       @action = h[:action]
+      @cfslimit = h[:confuse] || 9
+      @mc1 = h[:mc1] || 1
+      @mc2 = h[:mc2] || 9
     end
 
     def start
-      q = Kuku::Data.new(:aformat => @aformat)
+      h = {
+        :aformat => @aformat,
+        :confuse => @cfslimit,
+        :mc1 => @mc1,
+        :mc2 => @mc2
+      }
+      q = Kuku::Data.new(h)
       if @printversion
         q.print_version
         exit
@@ -265,23 +293,52 @@ end
 if __FILE__ == $0
   opt = OptionParser.new
   h = {}
-  opt.on("-v", "--version", "show version") {
-    h[:version] = true
-  }
-  opt.on("-n", "--number=VAL", "number of question") {|v|
-    h[:qmax] = v.to_i
-  }
-  opt.on("-Q", "--qonly", "question only") {
-    h[:qonly] = true
-  }
-  opt.on("-T", "--kts", "answer by \'Kuiz Time Shokku\'") {
-    h[:aformat] = 1
-    h[:pause1] = 3
-    h[:pause2] = 2
+  opt.on("-A", "--all", "print all questions") {|v|
+    h[:action] = :all
   }
   opt.on("-N", "--Number=VAL", "questions in a lump") {|v|
     h[:qmax] = v.to_i
     h[:pause1] = h[:pause2] = 0
+  }
+  opt.on("-Q", "--qonly", "question only") {
+    h[:qonly] = true
+  }
+  opt.on("-S", "--shuffle", "print all questions at random") {|v|
+    h[:action] = :shuffle
+  }
+  opt.on("-T", "--kts", "answer by \'Kuiz Time Shokku\'") {
+    h[:aformat] = 1
+  }
+  opt.on("-c", "--multiplicand=VAL", "upper limit of multiplicand") {|v|
+    case v
+    when /(\d+)[-,](\d+)/
+      n1 = $1.to_i
+      n2 = $2.to_i
+      if n1 == 0 || n2 == 0 || n1 > n2
+        $stderr.puts "option -c #{v} is ignored."
+        break
+      end
+      h[:mc1] = n1
+      h[:mc2] = n2
+    when /\d+/
+      n = $&.to_i
+      if n == 0
+        $stderr.puts "option -c #{v} is ignored."
+        break
+      elsif n == 1
+        h[:mc1] = h[:mc2] = 1
+      else
+        h[:mc1] = 2
+        h[:mc2] = n
+      end
+    end
+  }
+  opt.on("-f", "--confuse=VAL", "upper limit of confusion") {|v|
+    d = v.to_i
+    h[:confuse] = d if d > 0
+  }
+  opt.on("-n", "--number=VAL", "number of question") {|v|
+    h[:qmax] = v.to_i
   }
   opt.on("-p", "--pause=VAL", "pause by seconds") {|v|
     case v
@@ -295,11 +352,8 @@ if __FILE__ == $0
   opt.on("-s", "--seed=VAL", "random seed") {|v|
     srand(v.to_i)
   }
-  opt.on("-A", "--all", "print all questions") {|v|
-    h[:action] = :all
-  }
-  opt.on("-S", "--shuffle", "print all questions at random") {|v|
-    h[:action] = :shuffle
+  opt.on("-v", "--version", "show version") {
+    h[:version] = true
   }
   opt.parse!(ARGV)
   Kuku::Generator.new(h).start
